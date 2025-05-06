@@ -1,4 +1,10 @@
 package com.example.apptest
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.content.ContextCompat
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,9 +22,31 @@ import com.example.apptest.ui.theme.AppTestTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        // Mic permission launcher
+        val micPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                Toast.makeText(this, "Mic permission granted!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Mic permission denied.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         setContent {
             AppTestTheme {
+                LaunchedEffect(Unit) {
+                    if (ContextCompat.checkSelfPermission(
+                            this@MainActivity,
+                            Manifest.permission.RECORD_AUDIO
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+
+                }
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
                         name = "Android",
@@ -28,9 +56,9 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
 
-@Composable
+
+    @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
         text = "Hello $name!",
